@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101014"><meta name="description" content="Make someone's wish a little closer. Give a gift, help with a bill, and pass kindness forward.">
+<meta name="theme-color" content="#f5f3ff"><meta name="description" content="Make someone's wish a little closer. Give a gift, help with a bill, and pass kindness forward.">
 <title>WISHLY — Make a wish come true</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -10,77 +10,44 @@
 <link rel="stylesheet" href="/fx/drift-wall.css">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/animations.css">
+<link rel="stylesheet" href="/app.css">
+<link rel="stylesheet" href="/theme3d.css">
 </head>
 <body>
-<div id="toast" class="toast"></div>
-<div id="authView" class="auth-shell">
+<a class="skip-link" href="#main">Skip to content</a>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- Sign in / sign up / password reset (rendered into #authWrap by js/auth.js) -->
+<div id="authView" class="auth-shell hidden">
   <div class="auth-art">
     <div class="auth-wall" id="authWall" aria-hidden="true"></div><div class="auth-scrim" aria-hidden="true"></div>
     <div class="brand-light"><img class="logo" src="/images/logo-light.svg" alt="WISHLY"></div>
-    <div class="art-copy"><span class="eyebrow">A LITTLE GOOD GOES A LONG WAY</span><h1>Big wishes.<br><em>Kind strangers.</em><br>Real moments.</h1><p>Somewhere out there, someone has the means to make your day. And you might be that someone.</p></div>
-    <div class="auth-foot"><span>Give a little. Change a lot.</span><span>01 / 03</span></div>
+    <div class="art-copy"><span class="eyebrow">A LITTLE GOOD GOES A LONG WAY</span><p class="art-title">Big wishes.<br><em>Kind strangers.</em><br>Real moments.</p><p>Ask for help with honesty. Give with confidence. Every payment is verified on the server.</p></div>
+    <div class="auth-foot"><span>Give a little. Change a lot.</span><span>WISHLY</span></div>
   </div>
   <div class="auth-panel">
-    <div class="auth-top"><div class="logo-pair"><img class="logo logo-onlight" src="/images/logo.svg" alt="WISHLY"><img class="logo logo-ondark" src="/images/logo-light.svg" alt="" aria-hidden="true"></div><span class="auth-note">A kinder kind of giving</span></div>
-    <div class="auth-form-wrap">
-      <div class="auth-heading"><span class="eyebrow">WELCOME TO WISHLY</span><h2 id="authTitle">Good things start here.</h2><p id="authSubtitle">Sign in to give a wish a chance, or share one of your own.</p></div>
-      <form id="authForm" novalidate>
-        <div id="nameField" class="collapse is-collapsed" inert><div><div class="field"><label for="authName">Your name</label><input id="authName" name="name" placeholder="e.g. Alex Rivera" autocomplete="name"><small class="field-error" data-error-for="name" role="alert"></small></div></div></div>
-        <div class="field"><label for="authEmail">Email address</label><input id="authEmail" name="email" type="email" placeholder="you@example.com" required autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false"><small class="field-error" data-error-for="email" role="alert"></small></div>
-        <div class="field"><label for="authPassword">Password</label><div class="pw-wrap"><input id="authPassword" name="password" type="password" placeholder="At least 8 characters" required autocomplete="current-password"><button type="button" class="pw-toggle" id="pwToggle" aria-label="Show password" aria-pressed="false">Show</button></div><small class="field-error" data-error-for="password" role="alert"></small>
-          <div id="pwMeter" class="collapse is-collapsed" inert><div><div class="pw-meter" data-score="0" aria-hidden="true"><i></i><i></i><i></i><i></i><span id="pwHint">Use 8+ characters. A mix of letters and numbers is stronger.</span></div></div></div></div>
-        <p class="form-error" id="authError" role="alert"></p>
-        <button class="btn btn-primary btn-wide" id="authSubmit" type="submit"><span class="btn-label">Sign in</span> <span class="btn-arrow">↗</span><span class="spinner" aria-hidden="true"></span></button>
-      </form>
-      <p class="auth-switch" id="authSwitch">New to WISHLY? <button type="button" id="switchAuth">Create an account</button></p>
-      <div class="auth-safe"><span>⌑</span> Your account and payment details are protected.</div>
-    </div>
-    <div class="auth-bottom"><span>© 2026 WISHLY</span><span>Made for good things <b>✳</b></span></div>
+    <div class="auth-top"><a class="logo-pair" href="#/" aria-label="WISHLY home"><img class="logo logo-onlight" src="/images/logo.svg" alt="WISHLY"><img class="logo logo-ondark" src="/images/logo-light.svg" alt="" aria-hidden="true"></a><a class="auth-note" href="#/">Browse wishes first</a></div>
+    <div class="auth-form-wrap" id="authWrap"></div>
+    <div class="auth-bottom"><span>© 2026 WISHLY</span><span>Made for good things <b aria-hidden="true">✳</b></span></div>
   </div>
 </div>
+
+<!-- Main application -->
 <div id="appView" class="app hidden">
-  <aside class="topbar">
-    <a class="logo-pair" href="#" aria-label="WISHLY home"><img class="logo logo-onlight" src="/images/logo.svg" alt="WISHLY"><img class="logo logo-ondark" src="/images/logo-light.svg" alt="" aria-hidden="true"></a>
-    <div class="top-center"><span class="live-dot"></span> A little kindness is happening right now</div>
-    <div class="top-actions"><button class="icon-btn" id="themeToggle" title="Toggle theme">◐</button><button class="profile-chip" id="profileButton"><span class="avatar" id="avatar">A</span><span id="userName">Account</span><span class="chevron">⌄</span></button></div>
-  </aside>
-  <main class="main">
-    <section class="page active" id="homePage">
-      <div class="hero">
-        <div class="hero-copy"><span class="eyebrow">THE WISH WALL · <span id="wishCount">—</span> WISHES</span><h1>What if today,<br><em>you made it happen?</em></h1><p>Little wishes, big needs, and the people who make them possible.</p><div class="hero-actions"><button class="btn btn-primary" data-go="create">Share a wish <span>↗</span></button><button class="btn btn-quiet" data-scroll="discover">Explore wishes <span>↓</span></button></div></div>
-        <div class="hero-visual"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-spark s1">✳</div><div class="hero-spark s2">✦</div><div class="wish-note"><span class="note-icon">♡</span><small>A WISH IN PROGRESS</small><strong>One day, a<br>new beginning.</strong><div class="note-bottom"><span>Someone is helping</span><span class="mini-avatars"><i>J</i><i>M</i><i>+</i></span></div></div><div class="float-tag tag-top">✦ Good things grow</div><div class="float-tag tag-bottom">₱ 1,250 given today</div></div>
-      </div>
-      <div class="impact-strip"><div><strong>100%</strong><span>of your gift goes toward the wish, minus our clearly shown 1% fee</span></div><div><strong>01%</strong><span>small platform fee that keeps WISHLY running</span></div><div><strong>∞</strong><span>ways to make someone's day a little brighter</span></div></div>
-      <div class="section-head" id="discover"><div><span class="eyebrow">A REASON TO BELIEVE</span><h2>Wishes worth showing up for.</h2></div><button class="text-link" data-go="explore">See all wishes ↗</button></div>
-      <div class="filters"><div class="filter-tabs" id="homeFilters"><button class="selected" data-category="All">All wishes</button><button data-category="Bills">Bills</button><button data-category="Education">Education</button><button data-category="Essentials">Essentials</button><button data-category="Wishlist">Wishlist</button></div><div class="search-box">⌕ <input id="homeSearch" placeholder="Find a wish..."></div></div>
-      <div class="wish-grid" id="homeWishes"></div>
-    </section>
-    <section class="page" id="explorePage">
-      <div class="page-heading"><span class="eyebrow">FIND YOUR REASON</span><h1>Explore wishes.</h1><p>Every card is a chance to make something happen.</p></div>
-      <div class="filters"><div class="filter-tabs" id="exploreFilters"><button class="selected" data-category="All">Everything</button><button data-category="Bills">Bills</button><button data-category="Education">Education</button><button data-category="Essentials">Essentials</button><button data-category="Wishlist">Wishlist</button><button data-category="Experiences">Experiences</button></div><div class="search-box">⌕ <input id="exploreSearch" placeholder="Search wishes..."></div></div>
-      <div class="wish-grid" id="exploreWishes"></div>
-    </section>
-    <section class="page" id="createPage">
-      <div class="page-heading"><span class="eyebrow">YOUR STORY MATTERS</span><h1>Put a wish out there.</h1><p>Be honest about what you need. Someone might be looking for a way to help.</p></div>
-      <div class="create-layout"><form id="wishForm" class="create-card"><div class="form-title"><span>01</span><div><h3>Tell us about your wish</h3><p>Give people a reason to care.</p></div></div>
-        <div class="field"><label>Wish title</label><input name="title" required minlength="4" placeholder="e.g. A laptop for my studies"></div>
-        <div class="field"><label>Tell your story</label><textarea name="description" required minlength="12" rows="4" placeholder="What would this mean to you? Share only what you're comfortable sharing."></textarea></div>
-        <div class="field"><label>Choose a category</label><select name="category"><option>Wishlist</option><option>Bills</option><option>Education</option><option>Essentials</option><option>Experiences</option><option>Hobbies</option></select></div>
-        <div id="billFields" class="bill-fields hidden"><div class="field"><label>Bill provider</label><input name="billProvider" placeholder="e.g. CDO Electric Power"></div><div class="field"><label>Reference / account number</label><input name="billReference" placeholder="Shown privately to admins only"></div><div class="field"><label>Due date</label><input name="billDueDate" type="date"></div><p class="privacy-note">Bill details are sensitive. In this starter version, reference information is stored privately and is not shown on public wish cards. Avoid uploading full bills with personal data.</p></div>
-        <div class="field"><label>Amount needed <span class="muted">(PHP)</span></label><div class="amount-input"><span>₱</span><input name="targetAmount" type="number" min="100" max="1000000" step="1" required placeholder="0.00"></div><small>Set a realistic target between ₱100 and ₱1,000,000.</small></div>
-        <div class="field"><label>Image URL <span class="muted">(optional)</span></label><input name="imageUrl" type="url" placeholder="https://..."></div>
-        <button class="btn btn-primary btn-wide">Publish my wish <span>↗</span></button>
-      </form><aside class="create-aside"><div class="aside-quote">“The smallest act of kindness is worth more than the grandest intention.”<small>— Oscar Wilde</small></div><div class="aside-tip"><span>✳ A little tip</span><h3>Be real. Be specific.</h3><p>Explain why this wish matters and how it will help. Verified wishes may receive a trust badge after review.</p></div><div class="fee-card"><span class="eyebrow">A FAIR LITTLE FEE</span><strong>1%</strong><p>WISHLY keeps a transparent 1% service fee on completed gifts. The remaining 99% is allocated to your wish.</p></div></aside></div>
-    </section>
-    <section class="page" id="wishesPage"><div class="page-heading"><span class="eyebrow">YOUR LITTLE CORNER</span><h1>My wishes.</h1><p>Keep track of the things you're hoping for.</p></div><div id="myWishes" class="wish-grid"></div></section>
-    <section class="page" id="givingPage"><div class="page-heading"><span class="eyebrow">KINDNESS, KEPT</span><h1>My giving.</h1><p>Every contribution is a story you helped write.</p></div><div class="stats-row" id="givingStats"></div><div class="history-card" id="givingHistory"></div></section>
-    <section class="page" id="profilePage"><div class="page-heading"><span class="eyebrow">YOUR WISHLY ACCOUNT</span><h1>Your profile.</h1><p>A little overview of your time here.</p></div><div class="profile-card" id="profileDetails"></div><button class="btn btn-outline" id="logoutButton">Sign out</button></section>
-    <section class="page" id="adminPage"><div class="page-heading"><span class="eyebrow">BACK OFFICE</span><h1>Admin overview.</h1><p>Operational view of giving activity. Payouts require separate review and processing.</p></div><div id="adminContent"></div></section>
-  </main>
-  <nav class="dock"><button class="dock-item active" data-page="home"><span>⌂</span><small>Home</small></button><button class="dock-item" data-page="explore"><span>⌕</span><small>Explore</small></button><button class="dock-create" data-page="create"><span>＋</span></button><button class="dock-item" data-page="wishes"><span>♡</span><small>My wishes</small></button><button class="dock-item" data-page="giving"><span>↗</span><small>My giving</small></button></nav>
+  <header class="topbar">
+    <a class="logo-pair" href="#/" aria-label="WISHLY home"><img class="logo logo-onlight" src="/images/logo.svg" alt="WISHLY"><img class="logo logo-ondark" src="/images/logo-light.svg" alt="" aria-hidden="true"></a>
+    <div class="top-center"><span class="live-dot" aria-hidden="true"></span> A little kindness is happening right now</div>
+    <div class="top-actions" id="topActions"></div>
+  </header>
+  <div id="banners"></div>
+  <main class="main" id="main" tabindex="-1"></main>
+  <footer class="site-foot"><span>WISHLY connects people who need help with people who want to give. We review reports but can't guarantee any individual request is genuine, so only give to people you trust.</span><span>1% platform fee on completed gifts</span></footer>
+  <nav class="dock" id="dock" aria-label="Primary"></nav>
 </div>
-<div id="wishModal" class="modal hidden"><div class="modal-backdrop" data-close></div><div class="modal-card"><button class="modal-close" data-close>×</button><div id="modalContent"></div></div></div>
-<div id="profileMenu" class="profile-menu hidden"><button data-page="profile">My profile</button><button data-page="admin" id="adminMenu" class="hidden">Admin dashboard</button><button id="menuLogout">Sign out</button></div>
-<script src="/app.js"></script>
+<div id="profileMenu" class="profile-menu hidden" role="menu"></div>
+<div id="modalHost"></div>
+<noscript><p style="padding:24px;font-family:sans-serif">WISHLY needs JavaScript enabled to run.</p></noscript>
+<script type="module" src="/js/main.js"></script>
 <script type="module" src="/fx/init.js"></script>
+<script type="module" src="/fx/depth.js"></script>
 </body></html>
