@@ -21,7 +21,7 @@
 ## Ground rules
 
 - **Be kind.** WISHLY is about people helping people. Treat issues, reviews and discussions the same way.
-- **Keep it small and readable.** The backend is deliberately one Express file and the front end has no build step. A change that adds a framework, a bundler or a heavy dependency needs a strong reason, discussed in an issue first.
+- **Keep it small and readable.** The backend is a dependency-free Node handler and the front end is plain ES modules with no build step. A change that adds a framework, a bundler or a heavy dependency needs a strong reason, discussed in an issue first.
 - **Money and privacy come first.** Read [Money and privacy rules](#money-and-privacy-rules) before you touch payments, fees, bill details or user data.
 - **Originality.** Only submit code you wrote or have the right to contribute. If you adapt something (for example an effect from a component library), say where it came from and make sure its license allows it.
 - **One idea per pull request.** Small, focused changes are reviewed quickly.
@@ -33,27 +33,28 @@
 
 ## Set up
 
-**You need:** Node.js **26 or newer** (WISHLY uses the built-in `node:sqlite`) and npm.
+Requires Node.js **22.13+**.
 
 ```bash
+cd WISHLY
 npm install
 cp .env.example .env          # Windows PowerShell: Copy-Item .env.example .env
-# edit .env and set a long random JWT_SECRET
+npm run seed                  # optional demo accounts (password wishly-demo-2026)
 npm run dev                   # http://localhost:4000
 ```
 
-Account creation and browsing work with no PayMongo keys. Add **test** keys (`sk_test_...`) only if you are working on checkout, and never commit your `.env`.
-
-**Handy commands**
+Sign-up and browsing work with no PayMongo keys; verification links print to the server console. Add **test** keys (`sk_test_...`) only when working on checkout, and never commit `.env`.
 
 | Command | What it does |
 |---|---|
-| `npm run dev` | Starts the server with auto-restart (nodemon). |
-| `npm start` | Starts the server once. |
-| `npm run check` | Syntax-checks `server.js`. |
-| `npm run smoke` | With the server running, checks health, the wish list, signup and login. Set `WISHLY_URL` to test another address. |
+| `npm run dev` / `npm start` | Start the server (with / without auto-restart). |
+| `npm test` | Run the automated test suites (in-memory SQLite, fake PayMongo). |
+| `npm run build` | Syntax-check server and client, scan `/public` for secrets, validate migrations. |
+| `npm run migrate` | Apply pending migrations (SQLite, or PostgreSQL when `DATABASE_URL` is set). |
+| `npm run smoke` | With the server running, exercise signup, cookie session, login failure and logout. |
+| `npm run make-admin -- you@example.com` | Promote an account you own to administrator. |
 
-**Start from a clean database** by stopping the server and deleting `data/wishly.sqlite*`. It is recreated and re-seeded on the next start.
+**Start from a clean local database** by stopping the server and deleting `data/wishly-v2.sqlite*`.
 
 <img src="images/wishly-divider.svg" alt="" width="100%">
 
@@ -61,54 +62,40 @@ Account creation and browsing work with no PayMongo keys. Add **test** keys (`sk
 
 ```text
 WISHLY/
-├── lib/validation.js        input validation, no Express or DB imports
-├── public/
-│   ├── index.html           all markup: auth screen, app pages, modal
-│   ├── app.js               client logic
-│   ├── styles.css           base theme and layout
-│   ├── animations.css       motion, logo swapping, auth polish
-│   ├── images/              logos, favicon, tile art
-│   └── fx/                  drift-wall, crosshair, click-spark, init.js
-├── scripts/smoke.js
-└── server.js                API, schema, PayMongo, webhook
+├── server.js / api/index.js   local and Vercel entry points
+├── src/routes.js              the whole API and who may call each route
+├── src/app.js                 CSRF, rate limits, sessions, role checks
+├── src/services/              business logic (auth, wishlists, contributions, payments, moderation, admin, ...)
+├── src/lib/                   validation, crypto, PayMongo client, mailer, audit
+├── src/db/                    SQLite/PostgreSQL adapter and migrations
+├── public/js/                 front end ES modules (core.js has the safe `h` template tag)
+├── public/fx/                 drift-wall, crosshair, click-spark, init.js
+└── tests/                     node:test suites
 ```
 
-The split is on purpose: `lib/` knows nothing about HTTP, `public/` knows nothing about Node, and effects in `public/fx/` know nothing about WISHLY. Each effect takes an element and options, and returns `update()` and `destroy()`.
+`src/lib` and `src/services` know nothing about HTTP framing, `public/` knows nothing about Node, and effects in `public/fx/` know nothing about WISHLY.
 
 <img src="images/wishly-divider.svg" alt="" width="100%">
 
 ## Recipes
 
 ### Add a wish category
-
-Categories appear in three places. Keep them in sync:
-
-1. **`server.js`**: the allow-list in `POST /api/wishes`.
-2. **`public/index.html`**: the `<select name="category">` on the create form and, if you want a tab, the buttons in `#homeFilters` and `#exploreFilters`.
-3. **`public/images/tiles/`** *(optional)*: new placeholder art for the login wall, plus its entry in `public/fx/init.js`.
-
-### Change signup rules
-
-Edit **`lib/validation.js`** only, then mirror the same message in `validateAuth()` in `public/app.js` so the browser and server agree. Keep two things true:
-
-- The email pattern uses single backslashes or character classes. A double-escaped pattern (`\\S` inside a regex literal) matches a literal backslash and rejects every real email. That exact mistake once made signup impossible.
-- Passwords are limited to **72 bytes** because bcrypt ignores the rest.
+Update `CATEGORIES` in `src/lib/validation.js` **and** the `CHECK` list in a **new** migration (never edit an applied migration). The UI reads categories from `/api/config`.
 
 ### Add an API route
-
-1. Validate input first and return `{ "error": "..." }` with a sensible status code (`400` input, `401` not signed in, `403` not allowed, `404` missing, `409` conflict).
-2. Use prepared statements (`db.prepare(...).run(...)`). Never build SQL from user input.
-3. Add `auth` (and `admin` where relevant) middleware.
-4. Document it in the README's API table.
-5. Return only the fields the client needs. Never return `password_hash`, bill references or other people's emails.
+1. Add it in `src/routes.js` with explicit `auth`, `roles`, `verified` and `limit` settings. Authorization is enforced there, on the server.
+2. Put logic in a service. Validate with `src/lib/validation.js` and use parameterized SQL (`$1, $2`) that works on both SQLite and PostgreSQL.
+3. Return only the fields the client needs, never `password_hash`, bill references or other people's e-mails.
+4. Add a test in `tests/`.
 
 ### Change the platform fee
+Set `PLATFORM_FEE_PERCENT`. Fee wording in the UI is read from the API; check `public/js/` for any remaining copy that names a number.
 
-Set `PLATFORM_FEE_PERCENT`. The UI copy currently says "1%" in several places (`index.html`, `app.js`, and the PayMongo `remarks` in `server.js`). If you change the number, update every mention so the interface never misstates the fee.
+### Change schema
+Add a new migration to `src/db/migrations.js`. Use the `{{PK}}`, `{{TS}}` tokens so it runs on both databases, and test it on SQLite and PostgreSQL.
 
 ### Replace the placeholder tile art
-
-Drop 600×400 images into `public/images/tiles/` and list them in `public/fx/init.js`. Real photos need permission to use, and wishers' photos should only appear with their consent.
+Drop 600×400 images into `public/images/tiles/` and list them in `public/fx/init.js`. Real photos need permission to use.
 
 <img src="images/wishly-divider.svg" alt="" width="100%">
 
